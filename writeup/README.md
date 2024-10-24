@@ -59,3 +59,60 @@ CIO, AB Innovations
 Ta nhận được từ công 1 file pcapng. Chứa thông tin về lưu lượng mạng trong khoảng thời gian bị tấn công.
 
 Việc phân tích lưu lượng mạng giúp ta xác định được cái gói dữ liệu được truyền đi từ các địa chỉ IP. Lưu lượng mạng bất thường, hướng đi của cuộc tấn công. Xác định được ip nguồn, ip đích, cổng nguồn cổng đích. Giao thức được sử dụng, 
+
+![image 2](image/2.png)
+
+Tìm kiếm lưu lượng đáng ngờ trong conversations
+![image 3](image/3.png)
+
+Ta thấy lưu lượng rất lớn, đáng ngờ đến từ địa chỉ ip 10.0.2.15 đến địa chỉ ip 89.248.163.49
+
+Sử dụng lệnh: ip.src == 10.0.2.15 && ip.dst ==  89.248.163.49
+
+Follow tcp: **tcp.stream eq 110**
+![image 4](image/4.png)
+
+Follow tcp: **tcp.stream eq 111**
+![image 5](image/5.png)
+
+Dựa trên bằng chứng thu thập được. Có thể thấy địa chỉ ip nội bộ **10.0.2.15** với user agent **curl/8.7.1** up file **customers.csv** đến địa chỉ ip **89.248.163.49**. Server lưu trữ file : **Werkzeug/3.0.4 Python/3.10.12**
+
+Kiểm tra địa chỉ đáng ngờ **89.248.163.49** trên virustotal
+![image 6](image/6.png)
+=> địa chỉ IP này độc hại
+
+# Inject 03
+Sau khi báo cáo các thông tin thu thập được từ nhật ký mạng, công ty đã tiến hành trích xuất thêm tệp MFT để tìm kiếm thêm thông tin bổ sung về cuộc tấn công.
+```
+Dear Sir/Madam,
+
+Thank you for identifying the signs of data exfiltration and the suspicious IP address. Based on our checks, that destination IP address (89.248.163.49) is not known to us for our daily operations. The source IP address (10.0.2.15) is not the machine that reported the incident. We will analyse this machine as well.
+
+We have conducted an anti-virus scan on the initial affected system (10.0.2.6) and found no suspicious files to be flagged. While the prefetch file showed signs of tampering and file deletion, we were able to extract the Master File Table (MFT) file related to this compromised system and have attached it in this email. It was observed that the suspicious behaviours were seen after an employee downloaded a file and executed it. We seek your assistance in analysing the MFT file for the following:
+
+Identify the locations and names of suspicious or malicious files Identify the account that is hosting the malicious file
+
+Thank you.
+
+Best Regards,
+Adam Lam
+CIO, AB Innovations
+```
+
+Ta tiến hành phân tích file MFT (Master file table). File MFT chứa thông tin chi tiết về các tệp trên hệ thống NTFS: thuộc tính của tệp, thời gian thực thi, sửa đổi, kích thước và vị trí của chúng trên ổ cứng.
+
+Việc kết hợp phân tích Pcapng với file MFT giúp hiểu do về cuộc tấn công. Xem có các file nào được thực thi hay không. 
+
+Sử dụng **MFTcmd** để phân tích, trích xuất csv
+![image 7](image/7.png)
+
+Tiếp theo đó sử dụng **TimelineExplorer** để trực quan hóa dữ liệu, công cụ này tổ chức dữ liệu theo dòng thời gian.
+
+Tìm kiếm tệp customers.csv
+![image 8](image/8.png)
+
+Từ email gửi yêu cầu hỗ trợ: thông tin được cho biết là đã có nhân viên tải xuống file và thực thi tệp đó.
+
+Đường dẫn tệp tin đáng ngờ: **\Alice Wong\Downloads**
+
+![image 9](image/9.png)
