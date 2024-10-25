@@ -350,4 +350,5 @@ Content-Transfer-Encoding: base64
 
 Sử dụng công cụ exiftool để kiểm tra xem file độc hại 
 ![image 24](image/24.png)
+
 file được tạo vào **2024:08:19 16:36:42**
